@@ -5,20 +5,25 @@
     prompt2:       .asciiz   	 "Enter the second number: "
     menu:   	   .asciiz   	 "Enter the number associated with the operation you want performed: 1 => add, 2 => subtract or 3 => multiply: "
     resultText:    .asciiz   	 "Your final result is: "
+    var1:          .word         8
 
-    hello: .asciiz "Hello World"
+    hello: .asciiz "Hello and welcome to this COM181 Systems Architecture Coursework 2 solution"
 .text
 
 .globl main
 main:
-    la $a0, hello
+    la $a0, 8
+    li $v0, 1
+    syscall
+
     li $v0, 4
+    la $a0, hello
     syscall
 
     li $v0,10 #This is to terminate the program
     syscall
 
-    
+
 #    li $v0, 4     #command for printing a string
 #    la $a0, arraylength #loading the string to print into the argument to enable printing
 #    syscall   	 #executing the command 
