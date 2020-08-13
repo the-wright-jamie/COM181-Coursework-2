@@ -34,31 +34,33 @@ main:
     lw $t1, iterator                            #load the iterator into temp register 1
     lw $t2, arrayLength                         #load the arrayLength into temp register 2
 
+    #print the array in a nice fashion (TASK 1)
     print_all_numbers:
-        bgt $t1, $t2, reset_point_1
+        bgt $t1, $t2, reset_point_1             #if looped through all numbers, branch tho the next job
 
-        sll $t3, $t1, 2 #t3 = 4 * i
+        sll $t3, $t1, 2                         #comment for my own future reference: take the current iteration and multiply by 4, since the offset for each array index in the register is 4 (i.e. if we want to get array index 'n', we want to get the memory address n * 4). sll (shift left logical) is a left shift, which will multiply the number by 2. The third parameter of this instruction is how many time the shift occurs. e.g. if 1, it will shift left once (i.e. multiply by 2). if 2, it will left shift twice (i.e. multiply by 4, which is what we want to do here). Basically, make $t3 = $t1 (iterator) * 4.
 
-        addu $t3, $t3, $t0
+        addu $t3, $t3, $t0                      #$t3 = $t3 + memory location of the array
 
         li $v0, 1
-        lw $a0, 0($t3)
-        syscall
+        lw $a0, 0($t3)                          #take the address that is stored in $t3 and...
+        syscall                                 #print whatever is in that address
 
         li $v0, 4
         la $a0, separator
-        syscall
+        syscall                                 #print the number spacer
 
-        addi $t1, $t1, 1
+        addi $t1, $t1, 1                        #increase iteration by 1
 
-        j print_all_numbers
+        j print_all_numbers                     #jump to the start of this section
 
+    #reset the registers
     reset_point_1:
         la $t0, array
         lw $t1, iterator
         lw $t2, arrayLength
 
-        j find_big_and_small
+        j find_big_and_small                    #jump to the next task (redundant but helps me keep track)
 
     find_big_and_small:
         bgt $t1, $t2, reset_point_1
