@@ -1,7 +1,7 @@
 .data
     #data and metadata
-    array:	       .word         0x50, 0x33, 0x44, 0x88, 0x56, 0x45, 0x56, 0x41, 0x00, 0x33, 0x44, 0x88, 0x56, 0x45, 0x56, 0x41, 0x00, 0x33, 0x44, 0x88, 0x56, 0x25, 0x58, 0x51, 0x03, 0x33, 0x24, 0x83, 0x52, 0x72, 0x16, 0x73, 0x85, 0x45, 0x47, 0x86, 0x36, 0x43, 0x52, 0x41, 0x74, 0x32, 0x04, 0x28, 0x26, 0x23, 0x46, 0x46, 0x06, 0x33, 0x34, 0x23, 0x21, 0x53, 0x15, 0x47, 0x77, 0x38, 0x41, 0x89, 0x58, 0x42, 0x51, 0x40, 0x86, 0x53, 0x40, 0x58, 0x36, 0x67, 0x53, 0x71, 0x03, 0x33, 0x74, 0x01, 0x89, 0x45, 0x12, 0x86, 0x60, 0x93, 0x42, 0x34, 0x66, 0x41, 0x51, 0x22, 0x60, 0x73, 0x41, 0x48, 0x46, 0x55, 0x52, 0x21, 0x00, 0x33, 0x64, 0x48, 0x66, 0x95, 0x53, 0x01, 0x03, 0x03, 0x24, 0x18, 0x16, 0x42, 0x53, 0x12, 0x40, 0x27, 0x47, 0x38, 0x56, 0x33, 0x58, 0x49, 0x09, 0x33, 0x04, 0x31, 0x34, 0x02, 0x22, 0x32
-    arrayLength:   .word         0x02           #0 index array
+    array:	       .word         0x50, 0x33, 0x44, 0x88, 0x56, 0x45, 0x56, 0x41, 0x80, 0x33, 0x44, 0x88, 0x56, 0x45, 0x56, 0x41, 0x80, 0x33, 0x44, 0x88, 0x56, 0x25, 0x58, 0x51, 0x03, 0x33, 0x24, 0x83, 0x52, 0x72, 0x16, 0x73, 0x85, 0x45, 0x47, 0x86, 0x36, 0x43, 0x52, 0x41, 0x74, 0x32, 0x04, 0x28, 0x26, 0x23, 0x46, 0x46, 0x06, 0x33, 0x34, 0x23, 0x21, 0x53, 0x15, 0x47, 0x77, 0x38, 0x41, 0x89, 0x58, 0x42, 0x51, 0x40, 0x86, 0x53, 0x40, 0x58, 0x36, 0x67, 0x53, 0x71, 0x03, 0x33, 0x74, 0x01, 0x89, 0x45, 0x12, 0x86, 0x60, 0x93, 0x42, 0x34, 0x66, 0x41, 0x51, 0x22, 0x60, 0x73, 0x41, 0x48, 0x46, 0x55, 0x52, 0x21, 0x80, 0x33, 0x64, 0x48, 0x66, 0x95, 0x53, 0x01, 0x03, 0x03, 0x24, 0x18, 0x16, 0x42, 0x53, 0x12, 0x40, 0x27, 0x47, 0x38, 0x56, 0x33, 0x58, 0x49, 0x09, 0x33, 0x04, 0x31, 0x34, 0x02, 0x22, 0x32
+    arrayLength:   .word         0x03           #0 index array
 
     #generic
     iterator:      .word         0x00
@@ -37,6 +37,10 @@ main:
     la $a0, arrayMessage                        #load the string into argument 0
     syscall                                     #print the array message
 
+    li $v0, 4                                   #prepare to print a string (call 4)
+    la $a0, newLine                             #load the string into argument 0
+    syscall                                     #take a new line
+
     #initialise registers
     la $t0, array                               #load array into temp register 0
     lw $t1, iterator                            #load the iterator into temp register 1
@@ -58,7 +62,7 @@ main:
         la $a0, separator
         syscall                                 #print the number spacer
 
-        addi $t1, $t1, 1                        #increase iteration by 1
+        addi $t1, $t1, 1                        #increment loop counter by 1
 
         j print_all_numbers                     #jump to the start of this section
 
@@ -91,59 +95,59 @@ main:
         slt $t7, $t8, $t5                       #check to see if smaller
         slt $t6, $t4, $t8                       #check to see if bigger
 
-        beq $t6, 1, larger
-        beq $t7, 1, smaller
-        j continue
+        beq $t6, 1, larger                      #branch if the current number is bigger than the largest known value
+        beq $t7, 1, smaller                     #branch if the current number is bigger than the smallest known value
+        j continue                              #jump to continue if neither condition it meet
 
         larger:
-            lw $t4, 0($t3)
-            j continue
+            lw $t4, 0($t3)                      #store this value in the register
+            j continue                          #jump to continue
 
         smaller:
-            lw $t5, 0($t3)
-            j continue
+            lw $t5, 0($t3)                      #store this value in the register
+            j continue                          #jump to continue
 
         continue:
-            #li $v0, 1
-            #lw $a0, 0($t3)
-            #syscall
+            addi $t1, $t1, 1                    #increment loop counter by 1
 
-            #li $v0, 4
-            #la $a0, separator
-            #syscall
+            xor $t6, $t6, $t6                   #clear register
+            xor $t7, $t7, $t7                   #clear register
+            xor $t8, $t8, $t8                   #clear register
 
-        addi $t1, $t1, 1
-
-        xor $t6, $t6, $t6
-        xor $t7, $t7, $t7
-        xor $t8, $t8, $t8
-
-        j find_big_and_small
+            j find_big_and_small                #jump to beginning 
         
     transition_point_2:
-        li $v0, 4
-        la $a0, biggest
-        syscall
+        li $v0, 4                               #prepare to print a string (call 4)
+        la $a0, newLine                         #load the string into argument 0
+        syscall                                 #take a new line
 
-        li $v0, 1
-        lw $a0, 0($t4)
-        syscall
+        li $v0, 4                               #prepare to print a string (call 4)
+        la $a0, newLine                         #load the string into argument 0
+        syscall                                 #take a new line
 
-        li $v0, 4                                   #prepare to print a string (call 4)
-        la $a0, newLine                             #load the string into argument 0
-        syscall                                     #take a new line
+        li $v0, 4                               #prepare to print a string (call 4)
+        la $a0, biggest                         #load the biggest number message in argument 0
+        syscall                                 #take a new line
 
-        li $v0, 4
-        la $a0, smaller
-        syscall
+        li $v0, 1                               #prepare to print a int (call 1)
+        la $a0, ($t4)                           #load the largest number into argument 0 
+        syscall                                 #take a new line
 
-        li $v0, 1
-        lw $a0, 0($t5)
-        syscall
+        li $v0, 4                               #prepare to print a string (call 4)
+        la $a0, newLine                         #load the string into argument 0
+        syscall                                 #take a new line
 
-        li $v0, 4                                   #prepare to print a string (call 4)
-        la $a0, newLine                             #load the string into argument 0
-        syscall                                     #take a new line
+        li $v0, 4                               #prepare to print a string (call 4)
+        la $a0, smallest                        #load the biggest number message in argument 0
+        syscall                                 #take a new line
+
+        li $v0, 1                               #prepare to print a int (call 1)
+        la $a0, ($t5)                           #load the smallest number into argument 0
+        syscall                                 #take a new line
+
+        li $v0, 4                               #prepare to print a string (call 4)
+        la $a0, newLine                         #load the string into argument 0
+        syscall                                 #take a new line
 
         j exit_loop
 
