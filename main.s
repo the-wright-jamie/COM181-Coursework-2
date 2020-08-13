@@ -1,53 +1,56 @@
 .data
     array:	       .word         0x50, 0x33, 0x44, 0x88, 0x56, 0x45, 0x56, 0x41, 0x00, 0x33, 0x44, 0x88, 0x56, 0x45, 0x56, 0x41, 0x00, 0x33, 0x44, 0x88, 0x56, 0x25, 0x58, 0x51, 0x03, 0x33, 0x24, 0x83, 0x52, 0x72, 0x16, 0x73, 0x85, 0x45, 0x47, 0x86, 0x36, 0x43, 0x52, 0x41, 0x74, 0x32, 0x04, 0x28, 0x26, 0x23, 0x46, 0x46, 0x06, 0x33, 0x34, 0x23, 0x21, 0x53, 0x15, 0x47, 0x77, 0x38, 0x41, 0x89, 0x58, 0x42, 0x51, 0x40, 0x86, 0x53, 0x40, 0x58, 0x36, 0x67, 0x53, 0x71, 0x03, 0x33, 0x74, 0x01, 0x89, 0x45, 0x12, 0x86, 0x60, 0x93, 0x42, 0x34, 0x66, 0x41, 0x51, 0x22, 0x60, 0x73, 0x41, 0x48, 0x46, 0x55, 0x52, 0x21, 0x00, 0x33, 0x64, 0x48, 0x66, 0x95, 0x53, 0x01, 0x03, 0x03, 0x24, 0x18, 0x16, 0x42, 0x53, 0x12, 0x40, 0x27, 0x47, 0x38, 0x56, 0x33, 0x58, 0x49, 0x09, 0x33, 0x04, 0x31, 0x34, 0x02, 0x22, 0x32
+    iterator:      .word         0x00
     arraylength:   .word         0x80
-    prompt1:       .asciiz   	 "Enter the first number: "
-    prompt2:       .asciiz   	 "Enter the second number: "
-    menu:   	   .asciiz   	 "Enter the number associated with the operation you want performed: 1 => add, 2 => subtract or 3 => multiply: "
-    resultText:    .asciiz   	 "Your final result is: "
-    var1:          .word         8
 
-    hello: .asciiz "Hello and welcome to this COM181 Systems Architecture Coursework 2 solution"
+    seperator:     .asciiz       ", "
+    new_line:      .asciiz       "\n"
+
+    hello:         .asciiz       "Hello and welcome to this COM181 Systems Architecture Coursework 2 solution"
+    array_message: .asciiz       "The array looks as follows: "
 .text
 
 .globl main
 main:
-    lw $t1, arraylength
-
-    loop:
-        lw $a0, array($t0) #load array item no. 0 into argument 0
-        li $v0, 1          #command syscall to print a integer
-        syscall            #execute command
-
-        addi $t0, $t0, 1
-        bne $t0, $t1, loop
-
     li $v0, 4
     la $a0, hello
     syscall
 
-#    li $v0, 4     #command for printing a string
-#    la $a0, arraylength #loading the string to print into the argument to enable printing
-#    syscall   	 #executing the command 
- 
-#    li $t0, 1
-#    move $t1, $a1
-#    addi $t2, $a1, 80
-#
-#    loop1:
-#        sw $t0, ($t1)
-#        add $t1, $t1, 1
-#        bne $t1, $t2, loop1
-#
-#    move $t1, $a1
-#
-#    loop2:
-#        lw $t0, ($t1)
-#        li $v0, 1
-#        move $a0, $t0
-#        syscall
-#        addi $t1, $t1, 4
-#        bne $t1, $t2, loop2
-end:
+    li $v0, 4
+    la $a0, new_line
+    syscall
+
+    li $v0, 4
+    la $a0, new_line
+    syscall
+
+    li $v0, 4
+    la $a0, array_message
+    syscall
+
+    la $t0, array
+    lw $t1, iterator
+    lw $t2, arraylength
+
+    print_all_numbers:
+        bgt $t1, $t2, exit_loop
+
+        sll $t3, $t1, 2 #t3 = 4 * i
+
+        addu $t3, $t3, $t0
+
+        li $v0, 1
+        lw $a0, 0($t3)
+        syscall
+
+        li $v0, 4
+        la $a0, seperator
+        syscall
+
+        addi $t1, $t1, 1
+
+        j print_all_numbers
+
+exit_loop:
     li $v0,10 #This is to terminate the program
     syscall
