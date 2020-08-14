@@ -26,16 +26,19 @@
 .globl main
 main:
     #REGISTER LIST
-    #    $t0
-    #    $t1
-    #    $t2
-    #    $t1
-    #    $t1
-    #    $t1
-    #    $t1
-    #    $t1
-    #    $t1
-    #    $t1
+    #    $t0: stores the array
+    #    $t1: stores the current iteration counter
+    #    $t2: stores the length of the array
+
+    #    $t3: during loops is used to store the current number pulled from the array
+    
+    #    $t4: stores the largest value during the search
+    #    $t5: stores the smallest value during the search
+    #    $t6: boolean, will be 1 ('true') if $t3 (current value) is larger than $t4
+    #    $t7: boolean, will be 1 ('true') if $t3 is smaller than $t5
+    #    $t8: used to mitigate and issue where I couldn't use 0($t3) to get the number
+
+    #    $t9: stores the menu option
 
     #welcome messages etc
     li $v0, 4                                   #prepare to print a string (call 4)
@@ -47,15 +50,15 @@ main:
     lw $t1, iterator                            #load the iterator into temp register 1
     lw $t2, arrayLength                         #load the arrayLength into temp register 2
 
+    #menu function
     menu:
         li $v0, 4                               #prepare to print a string (call 4)
         la $a0, menuText                        #load the string into argument 0
-        syscall                                 #print the hello message
+        syscall                                 #print the menu
             
-        #the next block of code is for reading the first number provided by the user
         li $v0, 5                               #command for reading an integer
         syscall   	                            #executing the command for reading an integer
-        move $t9, $v0                           #moving the number read from the user input into the temporary register $t0
+        move $t9, $v0                           #moving the number read from the user input into the temporary register $t9
 
         beq $t9, 1, print_all_numbers           #if option 1 was selected jump to print all numbers
         beq $t9, 2, find_big_and_small          #if option 2 was selected jump to finding the biggest and smallest number
@@ -65,15 +68,16 @@ main:
 
         beq $t9, 0, exit                        #if option 0 was selected exit the program
 
+        #if no branch occurred this means that no valid option was selected, so we should tell the user what they did wrong
         li $v0, 4                               #prepare to print a string (call 4)
         la $a0, invalidOption                   #load the string into argument 0
-        syscall                                 #print the hello message
+        syscall                                 #print the error message
 
-        j menu
+        j menu                                  #restart the menu
 
     #print the array in a nice fashion (TASK 1)
     print_all_numbers:
-        #re-initialise registers
+        #re-initialise registers to be safe
         la $t0, array                           #load array into temp register 0
         lw $t1, iterator                        #load the iterator into temp register 1
         lw $t2, arrayLength                     #load the arrayLength into temp register 2
@@ -83,23 +87,24 @@ main:
         syscall                                 #print the array message
 
         loop_start_1:
-            bgt $t1, $t2, transition_point_1    #if looped through all numbers, branch tho the next job
+            bgt $t1, $t2, transition_point_1    #if looped through all numbers, branch to the next job
 
-            sll $t3, $t1, 2                     #comment for my own future reference: take the current iteration and multiply by 4, since the offset for each array index in the register is 4 (i.e. if we want to get array index 'n', we want to get the memory address n * 4). sll (shift left logical) is a left shift, which will multiply the number by 2. The third parameter of this instruction is how many time the shift occurs. e.g. if 1, it will shift left once (i.e. multiply by 2). if 2, it will left shift twice (i.e. multiply by 4, which is what we want to do here). Basically, make $t3 = $t1 (iterator) * 4.
+            sll $t3, $t1, 2                     #gets the memory offset
+            #comment for my own future reference: take the current iteration and multiply by 4, since the offset for each array index in the register is 4 (i.e. if we want to get array index 'n', we want to get the memory address n * 4). sll (shift left logical) is a left shift, which will multiply the number by 2. The third parameter of this instruction is how many time the shift occurs. e.g. if 1, it will shift left once (i.e. multiply by 2). if 2, it will left shift twice (i.e. multiply by 4, which is what we want to do here). Basically, make $t3 = $t1 (iterator) * 4.
 
             addu $t3, $t3, $t0                  #$t3 = $t3 + memory location of the array
 
-            li $v0, 1
+            li $v0, 1                           #prepare to print an int
             lw $a0, 0($t3)                      #take the address that is stored in $t3 and...
             syscall                             #print whatever is in that address
 
             #check if we need another separation comma
-            bne $t1, $t2, separate
-            beq $t1, $t2, continue_loop
+            bne $t1, $t2, separate              #if there are still numbers to print according to the arrayLength, print a comma
+            beq $t1, $t2, continue_loop         #if not then finish with no comma
 
             separate:
-                li $v0, 4
-                la $a0, separator
+                li $v0, 4                       #prepare to print a string
+                la $a0, separator               #load the string into the register
                 syscall                         #print the number spacer
 
             continue_loop:
@@ -127,7 +132,7 @@ main:
 
         lw $t5, largeNumber                     #load the large number into the smallest number register
 
-        #this will have 2 passes
+        #TODO this will have 2 passes
 
         loop_start_2:
             bgt $t1, $t2, transition_point_2    #when finished move to point 2
@@ -166,19 +171,19 @@ main:
     transition_point_2:
         li $v0, 4                               #prepare to print a string (call 4)
         la $a0, biggest                         #load the biggest number message in argument 0
-        syscall                                 #take a new line
+        syscall                                 #execute the print
 
         li $v0, 1                               #prepare to print a int (call 1)
         la $a0, ($t4)                           #load the largest number into argument 0 
-        syscall                                 #take a new line
+        syscall                                 #execute the print
 
         li $v0, 4                               #prepare to print a string (call 4)
         la $a0, smallest                        #load the biggest number message in argument 0
-        syscall                                 #take a new line
+        syscall                                 #execute the print
 
         li $v0, 1                               #prepare to print a int (call 1)
         la $a0, ($t5)                           #load the smallest number into argument 0
-        syscall                                 #take a new line
+        syscall                                 #execute the print
 
         la $t0, array                           #reset register
         lw $t1, iterator                        #reset register
@@ -196,7 +201,7 @@ main:
     swap_big_and_small:
         li $v0, 4                               #prepare to print a string (call 4)
         la $a0, notImplemented                  #load the biggest number message in argument 0
-        syscall                                 #take a new line
+        syscall                                 #tell the user this function is not yet implemented 
 
         j menu                                  #jump back to the menu
 
@@ -205,7 +210,7 @@ main:
     image_smoothing:
         li $v0, 4                               #prepare to print a string (call 4)
         la $a0, notImplemented                  #load the biggest number message in argument 0
-        syscall                                 #take a new line
+        syscall                                 #tell the user this function is not yet implemented 
 
         j menu                                  #jump back to the menu
 
@@ -214,7 +219,7 @@ main:
     reverse_array:
         li $v0, 4                               #prepare to print a string (call 4)
         la $a0, notImplemented                  #load the biggest number message in argument 0
-        syscall                                 #take a new line
+        syscall                                 #tell the user this function is not yet implemented 
 
         j menu                                  #jump back to the menu
 
@@ -223,7 +228,7 @@ main:
 exit:
     li $v0, 4                                   #prepare to print a string (call 4)
     la $a0, exiting                             #load the biggest number message in argument 0
-    syscall                                     #take a new line
+    syscall                                     #tell the user that we are exiting
 
     li $v0, 10                                  #This is to terminate the program
     syscall
