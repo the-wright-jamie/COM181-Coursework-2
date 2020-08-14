@@ -1,7 +1,7 @@
 .data
     #data and metadata
     array:	       .word         898, 679, 324, 928, 677, 748, 774, 349, 726, 455, 49, 47, 63, 789, 456, 652, 147, 590, 187, 600, 244, 496, 701, 512, 122, 276, 332, 533, 11, 207, 853, 409, 717, 803, 686, 320, 672, 172, 702, 481, 461, 679, 959, 246, 552, 804, 177, 441, 424, 74, 517, 267, 895, 159, 442, 100, 760, 661, 939, 310, 419, 314, 12, 420, 744, 700, 233, 989, 181, 600, 729, 757, 207, 265, 214, 746, 715, 564, 559, 340, 688, 128, 439, 259, 896, 859, 46, 624, 153, 153, 989, 171, 8, 665, 240, 306, 831, 616, 2, 328, 457, 184, 800, 472, 467, 684, 669, 259, 578, 930, 409, 813, 65, 560, 284, 392, 764, 928, 121, 426, 776, 888, 520, 13, 922, 847, 905, 256
-    arrayLength:   .word         127           #0 index array - 128 elements in this array but computer starts counting at 0
+    arrayLength:   .word         127            #0 index array - 128 elements in this array but computer starts counting at 0
 
     #generic
     iterator:      .word         00
@@ -61,24 +61,24 @@ main:
     #print the array in a nice fashion (TASK 1)
     print_all_numbers:
         #re-initialise registers
-        la $t0, array                               #load array into temp register 0
-        lw $t1, iterator                            #load the iterator into temp register 1
-        lw $t2, arrayLength                         #load the arrayLength into temp register 2
+        la $t0, array                           #load array into temp register 0
+        lw $t1, iterator                        #load the iterator into temp register 1
+        lw $t2, arrayLength                     #load the arrayLength into temp register 2
 
-        li $v0, 4                                   #prepare to print a string (call 4)
-        la $a0, arrayMessage                        #load the string into argument 0
-        syscall                                     #print the array message
+        li $v0, 4                               #prepare to print a string (call 4)
+        la $a0, arrayMessage                    #load the string into argument 0
+        syscall                                 #print the array message
 
         loop_start_1:
-            bgt $t1, $t2, transition_point_1        #if looped through all numbers, branch tho the next job
+            bgt $t1, $t2, transition_point_1    #if looped through all numbers, branch tho the next job
 
-            sll $t3, $t1, 2                         #comment for my own future reference: take the current iteration and multiply by 4, since the offset for each array index in the register is 4 (i.e. if we want to get array index 'n', we want to get the memory address n * 4). sll (shift left logical) is a left shift, which will multiply the number by 2. The third parameter of this instruction is how many time the shift occurs. e.g. if 1, it will shift left once (i.e. multiply by 2). if 2, it will left shift twice (i.e. multiply by 4, which is what we want to do here). Basically, make $t3 = $t1 (iterator) * 4.
+            sll $t3, $t1, 2                     #comment for my own future reference: take the current iteration and multiply by 4, since the offset for each array index in the register is 4 (i.e. if we want to get array index 'n', we want to get the memory address n * 4). sll (shift left logical) is a left shift, which will multiply the number by 2. The third parameter of this instruction is how many time the shift occurs. e.g. if 1, it will shift left once (i.e. multiply by 2). if 2, it will left shift twice (i.e. multiply by 4, which is what we want to do here). Basically, make $t3 = $t1 (iterator) * 4.
 
-            addu $t3, $t3, $t0                      #$t3 = $t3 + memory location of the array
+            addu $t3, $t3, $t0                  #$t3 = $t3 + memory location of the array
 
             li $v0, 1
-            lw $a0, 0($t3)                          #take the address that is stored in $t3 and...
-            syscall                                 #print whatever is in that address
+            lw $a0, 0($t3)                      #take the address that is stored in $t3 and...
+            syscall                             #print whatever is in that address
 
             #check if we need another separation comma
             bne $t1, $t2, separate
@@ -87,12 +87,12 @@ main:
             separate:
                 li $v0, 4
                 la $a0, separator
-                syscall                             #print the number spacer
+                syscall                         #print the number spacer
 
             continue_loop:
-                addi $t1, $t1, 1                    #increment loop counter by 1
+                addi $t1, $t1, 1                #increment loop counter by 1
 
-                j loop_start_1                      #jump to the start of this section
+                j loop_start_1                  #jump to the start of this section
 
         #reset the registers
         transition_point_1:
@@ -163,6 +163,8 @@ main:
         la $a0, ($t5)                           #load the smallest number into argument 0
         syscall                                 #take a new line
 
+        xor $t4, $t4, $t4                       #clear register
+        xor $t5, $t5, $t5                       #clear register
         xor $t6, $t6, $t6                       #clear register
         xor $t7, $t7, $t7                       #clear register
         xor $t8, $t8, $t8                       #clear register
