@@ -25,6 +25,18 @@
 
 .globl main
 main:
+    #REGISTER LIST
+    #    $t0
+    #    $t1
+    #    $t2
+    #    $t1
+    #    $t1
+    #    $t1
+    #    $t1
+    #    $t1
+    #    $t1
+    #    $t1
+
     #welcome messages etc
     li $v0, 4                                   #prepare to print a string (call 4)
     la $a0, hello                               #load the string into argument 0
@@ -45,12 +57,13 @@ main:
         syscall   	                            #executing the command for reading an integer
         move $t9, $v0                           #moving the number read from the user input into the temporary register $t0
 
-        beq $t9, 1, print_all_numbers
-        beq $t9, 2, find_big_and_small
-        beq $t9, 3, swap_big_and_small
-        beq $t9, 4, image_smoothing
-        beq $t9, 5, reverse_array
-        beq $t9, 0, exit
+        beq $t9, 1, print_all_numbers           #if option 1 was selected jump to print all numbers
+        beq $t9, 2, find_big_and_small          #if option 2 was selected jump to finding the biggest and smallest number
+        beq $t9, 3, swap_big_and_small          #if option 3 was selected jump to swapping the biggest and smallest numbers
+        beq $t9, 4, image_smoothing             #if option 4 run the image smoothing
+        beq $t9, 5, reverse_array               #if option 5 reverse the array
+
+        beq $t9, 0, exit                        #if option 0 was selected exit the program
 
         li $v0, 4                               #prepare to print a string (call 4)
         la $a0, invalidOption                   #load the string into argument 0
@@ -100,6 +113,8 @@ main:
             lw $t1, iterator                    #reset register
             lw $t2, arrayLength                 #reset register
 
+            xor $t3, $t3, $t3                   #clear register
+
             j menu                              #jump to the next task (redundant but helps me keep track)
 
     #find the largest and smallest values
@@ -110,7 +125,9 @@ main:
         #$t6 will temporarily store if the $t3 (current value) is larger than $t4
         #$t7 will temporarily store if the $t3 (current value) is less than $t5
 
-        lw $t5, largeNumber
+        lw $t5, largeNumber                     #load the large number into the smallest number register
+
+        #this will have 2 passes
 
         loop_start_2:
             bgt $t1, $t2, transition_point_2    #when finished move to point 2
@@ -119,7 +136,7 @@ main:
 
             addu $t3, $t3, $t0                  #see earlier
 
-            lw $t8, 0($t3)
+            lw $t8, 0($t3)                      #load the number to be compared into register t8
 
             slt $t7, $t8, $t5                   #check to see if smaller
             slt $t6, $t4, $t8                   #check to see if bigger
@@ -163,34 +180,45 @@ main:
         la $a0, ($t5)                           #load the smallest number into argument 0
         syscall                                 #take a new line
 
+        la $t0, array                           #reset register
+        lw $t1, iterator                        #reset register
+        lw $t2, arrayLength                     #reset register
+
+        xor $t3, $t3, $t3                       #clear register
         xor $t4, $t4, $t4                       #clear register
         xor $t5, $t5, $t5                       #clear register
         xor $t6, $t6, $t6                       #clear register
         xor $t7, $t7, $t7                       #clear register
         xor $t8, $t8, $t8                       #clear register
 
-        j menu
+        j menu                                  #go back to the menu
 
     swap_big_and_small:
         li $v0, 4                               #prepare to print a string (call 4)
         la $a0, notImplemented                  #load the biggest number message in argument 0
         syscall                                 #take a new line
 
-        j menu
+        j menu                                  #jump back to the menu
+
+    transition_point_3:
 
     image_smoothing:
         li $v0, 4                               #prepare to print a string (call 4)
         la $a0, notImplemented                  #load the biggest number message in argument 0
         syscall                                 #take a new line
 
-        j menu
+        j menu                                  #jump back to the menu
+
+    transition_point_4:
 
     reverse_array:
         li $v0, 4                               #prepare to print a string (call 4)
         la $a0, notImplemented                  #load the biggest number message in argument 0
         syscall                                 #take a new line
 
-        j menu
+        j menu                                  #jump back to the menu
+
+    transition_point_5:
 
 exit:
     li $v0, 4                                   #prepare to print a string (call 4)
