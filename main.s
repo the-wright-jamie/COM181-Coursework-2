@@ -4,7 +4,6 @@
     arrayLength:   .word         127            #0 index array - 128 elements in this array but computer starts counting at 0
 
     #generic
-    iterator:      .word         00
     separator:     .asciiz       ", "
     largeNumber:   .word         0x7FFFFFFF
     hello:         .asciiz       "Hello and welcome to this COM181 Systems Architecture Coursework 2 solution"
@@ -39,6 +38,7 @@ main:
     #    $t8: used to mitigate and issue where I couldn't use 0($t3) to get the number
 
     #    $t9: stores the menu option
+    #       - used in the finding of the biggest and smallest to regulate the second pass
 
     #welcome messages etc
     li $v0, 4                                   #prepare to print a string (call 4)
@@ -47,7 +47,6 @@ main:
 
     #initialise registers
     la $t0, array                               #load array into temp register 0
-    lw $t1, iterator                            #load the iterator into temp register 1
     lw $t2, arrayLength                         #load the arrayLength into temp register 2
 
     #menu function
@@ -79,7 +78,7 @@ main:
     print_all_numbers:
         #re-initialise registers to be safe
         la $t0, array                           #load array into temp register 0
-        lw $t1, iterator                        #load the iterator into temp register 1
+        xor $t1, $t1, $t1                       #clear the iterator
         lw $t2, arrayLength                     #load the arrayLength into temp register 2
 
         li $v0, 4                               #prepare to print a string (call 4)
@@ -115,7 +114,7 @@ main:
         #reset the registers
         transition_point_1:
             la $t0, array                       #reset register
-            lw $t1, iterator                    #reset register
+            xor $t1, $t1, $t1                   #clear the iterator
             lw $t2, arrayLength                 #reset register
 
             xor $t3, $t3, $t3                   #clear register
@@ -132,7 +131,8 @@ main:
 
         lw $t5, largeNumber                     #load the large number into the smallest number register
 
-        #TODO this will have 2 passes
+        parent_loop:
+        xor $t1, $t1, $t1                       #clear the iterator to be safe
 
         loop_start_2:
             bgt $t1, $t2, transition_point_2    #when finished move to point 2
@@ -186,9 +186,9 @@ main:
         syscall                                 #execute the print
 
         la $t0, array                           #reset register
-        lw $t1, iterator                        #reset register
         lw $t2, arrayLength                     #reset register
 
+        xor $t1, $t1, $t1                       #clear the iterator
         xor $t3, $t3, $t3                       #clear register
         xor $t4, $t4, $t4                       #clear register
         xor $t5, $t5, $t5                       #clear register
