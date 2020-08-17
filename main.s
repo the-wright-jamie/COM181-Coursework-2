@@ -1,6 +1,8 @@
 .data
     #data and metadata
     array:	       .word         898, 679, 324, 928, 677, 748, 774, 349, 726, 455, 49, 47, 63, 789, 456, 652, 147, 590, 187, 600, 244, 496, 701, 512, 122, 276, 332, 533, 11, 207, 853, 409, 717, 803, 686, 320, 672, 172, 702, 481, 461, 679, 959, 246, 552, 804, 177, 441, 424, 74, 517, 267, 895, 159, 442, 100, 760, 661, 939, 310, 419, 314, 12, 420, 744, 700, 233, 989, 181, 600, 729, 757, 207, 265, 214, 746, 715, 564, 559, 340, 688, 128, 439, 259, 896, 859, 46, 624, 153, 153, 989, 171, 8, 665, 240, 306, 831, 616, 2, 328, 457, 184, 800, 472, 467, 684, 669, 259, 578, 930, 409, 813, 65, 560, 284, 392, 764, 928, 121, 426, 776, 888, 520, 13, 922, 847, 905, 256
+    arrayTemp:     .space        127
+    arraySpace:    .word         0
 
     #generic
     separator:     .asciiz       ", "
@@ -44,14 +46,12 @@ main:
     la $a0, hello                               #load the string into argument 0
     syscall                                     #print the hello message
 
-    la  $a0, array
-    jal lenArray
+    la  $a0, array                              #load array into argument 1
+    jal lenArray                                #jump to the array length finder
 
-    move $t2, $t1
-
-    xor $t1, $t1, $t1
-
-    add $t2, $t2, -139
+    move $t2, $t1                               #move the array length to the designated register
+    xor $t1, $t1, $t1                           #clear the iterator register
+    add $t2, $t2, -139                          #mitigate a bug in the array length finder
 
     #initialise registers
     la $t0, array                               #load array into temp register 0
@@ -221,13 +221,56 @@ main:
     transition_point_4:
 
     reverse_array:
+                #re-initialise registers to be safe
+        la $t0, array                           #load array into temp register 0
+        xor $t1, $t1, $t1                       #clear the iterator
+
         li $v0, 4                               #prepare to print a string (call 4)
-        la $a0, notImplemented                  #load the biggest number message in argument 0
-        syscall                                 #tell the user this function is not yet implemented 
+        la $a0, arrayMessage                    #load the string into argument 0
+        syscall                                 #print the array message
+
+        la $t1, ($t2)
+
+        loop_start_3:
+            beq $t1, -1, transition_point_5    #if looped through all numbers, branch to the next job
+
+            sll $t3, $t1, 2                     #gets the memory offset
+            #comment for my own future reference: take the current iteration and multiply by 4, since the offset for each array index in the register is 4 (i.e. if we want to get array index 'n', we want to get the memory address n * 4). sll (shift left logical) is a left shift, which will multiply the number by 2. The third parameter of this instruction is how many time the shift occurs. e.g. if 1, it will shift left once (i.e. multiply by 2). if 2, it will left shift twice (i.e. multiply by 4, which is what we want to do here). Basically, make $t3 = $t1 (iterator) * 4.
+
+            sw $t4, ($t3)
+
+            addu $t3, $t3, $t0                  #$t3 = $t3 (currently is the offset) + memory location of the array
+
+            sw $t1, arraySpace
+            sw $t3, arraySpace(arrayTemp)
+
+            li $v0, 1                           #prepare to print an int
+            lw $a0, 0($t3)                      #take the address that is stored in $t3 and...
+            syscall                             #print whatever is in that address
+
+            #check if we need another separation comma
+            bne $t1, 0, separate2              #if there are still numbers to print according to the arrayLength, print a comma
+            beq $t1, 0, continue_loop2         #if not then finish with no comma
+
+            separate2:
+                li $v0, 4                       #prepare to print a string
+                la $a0, separator               #load the string into the register
+                syscall                         #print the number spacer
+
+            continue_loop2:
+                addi $t1, $t1, -1                #increment loop counter by 1
+
+                j loop_start_3                  #jump to the start of this section
 
         j menu                                  #jump back to the menu
 
     transition_point_5:
+            la $t0, array                       #reset register
+            xor $t1, $t1, $t1                   #clear the iterator
+
+            xor $t3, $t3, $t3                   #clear register
+
+            j menu                              #jump to the next task (redundant but helps me keep track)
 
 lenArray:       #Fn returns the number of elements in an array
     addi $sp, $sp, -8
