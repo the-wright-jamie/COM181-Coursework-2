@@ -1,8 +1,7 @@
 .data
     #data and metadata
-    array:	       .word         898, 679, 324, 928, 677, 748, 774, 349, 726, 455, 49, 47, 63, 789, 456, 652, 147, 590, 187, 600, 244, 496, 701, 512, 122, 276, 332, 533, 11, 207, 853, 409, 717, 803, 686, 320, 672, 172, 702, 481, 461, 679, 959, 246, 552, 804, 177, 441, 424, 74, 517, 267, 895, 159, 442, 100, 760, 661, 939, 310, 419, 314, 12, 420, 744, 700, 233, 989, 181, 600, 729, 757, 207, 265, 214, 746, 715, 564, 559, 340, 688, 128, 439, 259, 896, 859, 46, 624, 153, 153, 989, 171, 8, 665, 240, 306, 831, 616, 2, 328, 457, 184, 800, 472, 467, 684, 669, 259, 578, 930, 409, 813, 65, 560, 284, 392, 764, 928, 121, 426, 776, 888, 520, 13, 922, 847, 905, 256
-    arrayTemp:     .space        127
-    arraySpace:    .word         0
+    array:	       .word         898, 679, 324#, 928, 677, 748, 774, 349, 726, 455, 49, 47, 63, 789, 456, 652, 147, 590, 187, 600, 244, 496, 701, 512, 122, 276, 332, 533, 11, 207, 853, 409, 717, 803, 686, 320, 672, 172, 702, 481, 461, 679, 959, 246, 552, 804, 177, 441, 424, 74, 517, 267, 895, 159, 442, 100, 760, 661, 939, 310, 419, 314, 12, 420, 744, 700, 233, 989, 181, 600, 729, 757, 207, 265, 214, 746, 715, 564, 559, 340, 688, 128, 439, 259, 896, 859, 46, 624, 153, 153, 989, 171, 8, 665, 240, 306, 831, 616, 2, 328, 457, 184, 800, 472, 467, 684, 669, 259, 578, 930, 409, 813, 65, 560, 284, 392, 764, 928, 121, 426, 776, 888, 520, 13, 922, 847, 905, 256
+    arrayLength:   .word         3
 
     #generic
     separator:     .asciiz       ", "
@@ -46,15 +45,9 @@ main:
     la $a0, hello                               #load the string into argument 0
     syscall                                     #print the hello message
 
-    la  $a0, array                              #load array into argument 1
-    jal lenArray                                #jump to the array length finder
-
-    move $t2, $t1                               #move the array length to the designated register
-    xor $t1, $t1, $t1                           #clear the iterator register
-    add $t2, $t2, -139                          #mitigate a bug in the array length finder
-
     #initialise registers
     la $t0, array                               #load array into temp register 0
+    la $t2, arrayLength
 
     #menu function
     menu:
@@ -86,6 +79,7 @@ main:
         #re-initialise registers to be safe
         la $t0, array                           #load array into temp register 0
         xor $t1, $t1, $t1                       #clear the iterator
+        la $t2, arrayLength
 
         li $v0, 4                               #prepare to print a string (call 4)
         la $a0, arrayMessage                    #load the string into argument 0
@@ -202,14 +196,83 @@ main:
 
         j menu                                  #go back to the menu
 
+    #swap the largest and smallest values
     swap_big_and_small:
-        li $v0, 4                               #prepare to print a string (call 4)
-        la $a0, notImplemented                  #load the biggest number message in argument 0
-        syscall                                 #tell the user this function is not yet implemented 
+        #$t4 will store the highest value
+        #$t5 will store the lowest value
 
-        j menu                                  #jump back to the menu
+        #$t6 will temporarily store if the $t3 (current value) is larger than $t4
+        #$t7 will temporarily store if the $t3 (current value) is less than $t5
 
+        lw $t5, largeNumber                     #load the large number into the smallest number register
+
+        swap_parent_loop:
+        xor $t1, $t1, $t1                       #clear the iterator to be safe
+
+        swap_loop_start:
+            bgt $t1, $t2, transition_point_2    #when finished move to point 2
+
+            sll $t3, $t1, 2                     #see earlier
+
+            addu $t3, $t3, $t0                  #see earlier
+
+            lw $t8, 0($t3)                      #load the number to be compared into register t8
+
+            slt $t7, $t8, $t5                   #check to see if smaller
+            slt $t6, $t4, $t8                   #check to see if bigger
+
+            beq $t6, 1, swap_larger             #branch if the current number is bigger than the largest known value
+            beq $t7, 1, swap_smaller            #branch if the current number is bigger than the smallest known value
+            j swap_continue                     #jump to continue if neither condition it meet
+
+            swap_larger:
+                lw $t4, 0($t3)                  #store this value in the register
+                move $s0, $t3
+                j swap_continue                 #jump to continue
+
+            swap_smaller:
+                lw $t5, 0($t3)                  #store this value in the register
+                move $s1, $t3
+                j swap_continue                 #jump to continue
+
+            swap_continue:
+                addi $t1, $t1, 1                #increment loop counter by 1
+
+                xor $t6, $t6, $t6               #clear register
+                xor $t7, $t7, $t7               #clear register
+                xor $t8, $t8, $t8               #clear register
+
+                j swap_loop_start               #jump to beginning 
+        
+    #print results and move on
     transition_point_3:
+        li $v0, 4                               #prepare to print a string (call 4)
+        la $a0, biggest                         #load the biggest number message in argument 0
+        syscall                                 #execute the print
+
+        li $v0, 1                               #prepare to print a int (call 1)
+        la $a0, ($t4)                           #load the largest number into argument 0 
+        syscall                                 #execute the print
+
+        li $v0, 4                               #prepare to print a string (call 4)
+        la $a0, smallest                        #load the biggest number message in argument 0
+        syscall                                 #execute the print
+
+        li $v0, 1                               #prepare to print a int (call 1)
+        la $a0, ($t5)                           #load the smallest number into argument 0
+        syscall                                 #execute the print
+
+        #la $t0, array                           #reset register
+
+        xor $t1, $t1, $t1                       #clear the iterator
+        xor $t3, $t3, $t3                       #clear register
+        xor $t4, $t4, $t4                       #clear register
+        xor $t5, $t5, $t5                       #clear register
+        xor $t6, $t6, $t6                       #clear register
+        xor $t7, $t7, $t7                       #clear register
+        xor $t8, $t8, $t8                       #clear register
+
+        j menu                                  #go back to the menu
 
     image_smoothing:
         li $v0, 4                               #prepare to print a string (call 4)
@@ -221,9 +284,10 @@ main:
     transition_point_4:
 
     reverse_array:
-                #re-initialise registers to be safe
+        #re-initialise registers to be safe
         la $t0, array                           #load array into temp register 0
         xor $t1, $t1, $t1                       #clear the iterator
+        la $t2, arrayLength
 
         li $v0, 4                               #prepare to print a string (call 4)
         la $a0, arrayMessage                    #load the string into argument 0
@@ -241,8 +305,8 @@ main:
 
             addu $t3, $t3, $t0                  #$t3 = $t3 (currently is the offset) + memory location of the array
 
-            sw $t1, arraySpace
-            sw $t3, arraySpace(arrayTemp)
+            #sw $t1, arraySpace
+            #sw $t3, arraySpace(arrayTemp)
 
             li $v0, 1                           #prepare to print an int
             lw $a0, 0($t3)                      #take the address that is stored in $t3 and...
